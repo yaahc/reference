@@ -326,16 +326,10 @@ fn foo() {
 // m!(); // Error: m is not in scope.
 ```
 
-* textual scope name bindings for macros may shadow path-based scope bindings
-  to macros
+r[macro.decl.scope.textual.shadow.path-based]
+Textual scope name bindings for macros may shadow path-based scope bindings to macros.
 
 ```rust
-macro_rules! m {
-    () => {
-        println!("m");
-    };
-}
-
 #[macro_export]
 macro_rules! m2 {
     () => {
@@ -343,9 +337,64 @@ macro_rules! m2 {
     };
 }
 
+m!(); // prints "m2\n"
+
+macro_rules! m {
+    () => {
+        println!("m");
+    };
+}
+
 use crate::m2 as m;
 
 m!(); // prints "m\n"
+```
+
+> [!NOTE]
+>
+> For areas where shadowing is not allowed, see [name resolution ambiguities].
+
+r[macro.decl.scope.path-based]
+### Path-based scope
+
+r[macro.decl.scope.path-based.intro]
+By default, a macro has no path-based scope. Macros can gain path-based scope in two ways:
+
+* [Use declaration re-export]
+* [`#[macro_export]`](macros-by-example.html#the-macro_export-attribute)
+
+r[macro.decl.scope.path.reexport]
+Macros can be re-exported to give them path-based scope from a module other than the crate root.
+
+```rust
+mac::m!(); // OK: Path-based lookup finds m in the mac module.
+
+mod mac {
+    macro_rules! m {
+        () => {};
+    }
+    pub(crate) use m;
+}
+```
+
+r[macro.decl.scope.path-based.visibility]
+Macros have an implicit visibility of `pub(crate)`. `#[macro_export]` changes the implicit visibility to `pub`.
+
+```rust,compile_fail,E0364
+macro_rules! private_m {
+    () => {};
+}
+
+#[macro_export]
+macro_rules! pub_m {
+    () => {};
+}
+
+pub(crate) use private_m as private_macro; // OK
+pub use pub_m as pub_macro; // OK
+
+pub use private_m; // ERROR: `private_m` is only public within
+                   // the crate and cannot be re-exported outside
 ```
 
 <!-- template:attributes -->
@@ -501,25 +550,6 @@ By default, macros only have [textual scope][macro.decl.scope.textual] and canno
 > crate::m!(); // OK
 > # fn main() {}
 > ```
-
-r[macro.decl.scope.path.reexport]
-
-* macros can be re-exported to give them path-based scope from a module other than the crate root.
-    * there's some visibility stuff here that may already be mentioned
-      elsewhere. I'm pretty sure that w/o a #[macro_export] the macro being
-      re-exported is implicitly pub(crate) and with one it is implicitly pub.
-      The later is mentioned below, don't remember where I saw the former.
-
-```
-mac::m!(); // OK: Path-based lookup finds m in the mac module.
-
-mod mac {
-    macro_rules! m {
-        () => {};
-    }
-    pub(crate) use m;
-}
-```
 
 r[macro.decl.scope.macro_export.export]
 The `macro_export` attribute causes a macro to be exported from the crate root so that it can be referred to in other crates by path.
@@ -765,3 +795,5 @@ For more detail, see the [formal specification].
 [Repetitions]: #repetitions
 [token]: tokens.md
 [`$crate`]: macro.decl.hygiene.crate
+[Use declaration re-export]: items/use-declarations.md#use-visibility
+[name resolution ambiguities]: names/name-resolution.md#r-names.resolution.expansion.imports.ambiguity

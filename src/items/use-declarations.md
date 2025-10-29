@@ -116,7 +116,7 @@ They may create bindings for:
 * [Built-in types]
 * [Attributes]
 * [Derive macros]
-* [Macros by example]
+* [`macro_rules`]
 
 r[items.use.path.disallowed]
 They cannot import [associated items], [generic parameters], [local variables], paths with [`Self`], or [tool attributes]. More restrictions are described below.
@@ -303,6 +303,10 @@ mod clashing {
 }
 ```
 
+> [!NOTE]
+>
+> For areas where shadowing is not allowed, see [name resolution ambiguities].
+
 r[items.use.glob.last-segment-only]
 `*` cannot be used as the first or intermediate segments.
 
@@ -390,10 +394,6 @@ r[items.use.restrictions.variant]
   use TypeAlias::MyVariant; //~ ERROR
   ```
 
-TODO mention ambiguities and link to name-res. Moved to name-res because
-ambiguities are fundamentally a product of the place of use, not the use
-declaration.
-
 [`extern crate`]: extern-crates.md
 [`macro_rules`]: ../macros-by-example.md
 [`self`]: ../paths.md#self
@@ -412,3 +412,4 @@ declaration.
 [tool attributes]: ../attributes.md#tool-attributes
 [type alias]: type-aliases.md
 [type namespace]: ../names/namespaces.md
+[name resolution ambiguities]: ../names/name-resolution.html#r-names.resolution.expansion.imports.ambiguity

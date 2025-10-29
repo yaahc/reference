@@ -240,6 +240,10 @@ A helper attribute for a derive macro is declared by adding its identifier to th
 > }
 > ```
 
+> [!NOTE]
+>
+> For helper attribute ambiguity errors, see [name resolution ambiguities].
+
 <!-- template:attributes -->
 r[macro.proc.attribute]
 ## The `proc_macro_attribute` attribute
@@ -440,3 +444,4 @@ their equivalent `#[doc = r"str"]` attributes when passed to macros.
 [type expressions]: types.md#type-expressions
 [type]: types.md
 [union]: items/unions.md
+[name resolution ambiguities]: names/name-resolution.md#r-names.resolution.expansion.imports.ambiguity.derivehelper

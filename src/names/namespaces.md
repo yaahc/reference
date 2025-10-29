@@ -117,9 +117,8 @@ This prevents one style from shadowing another.
 
 For example, the [`cfg` attribute] and the [`cfg` macro] are two different entities with the same name in the macro namespace, but they can still be used in their respective context.
 
-r[names.namespaces.sub-namespaces.use-shadow]
-It is still an error for a [`use` import] to shadow another macro, regardless of their sub-namespaces.
-* TODO revisit
+> [!NOTE]
+> For restrictions on shadowing macro sub-namespaces with [use declaration]s, see [name resolution ambiguity errors].
 
 [`cfg` attribute]: ../conditional-compilation.md#the-cfg-attribute
 [`cfg` macro]: ../conditional-compilation.md#the-cfg-macro
@@ -173,3 +172,5 @@ It is still an error for a [`use` import] to shadow another macro, regardless of
 [Type aliases]: ../items/type-aliases.md
 [union]: ../items/unions.md
 [use declaration]: ../items/use-declarations.md
+[name resolution ambiguity errors]: name-resolution.md#r-names.resolution.expansion.imports.ambiguity.pathvstextualmacro
+

@@ -106,6 +106,16 @@ macro_rules! example {
 example!();
 ```
 
+r[macro.invocation.name-resolution]
+
+Macros invocations can be resolved via two kinds of scopes:
+
+* Textual Scope
+    * [textual scope `macro_rules`](macros-by-example.md#r-macro.decl.scope.textual)
+* Path-based scope
+    * [path-based scope `macro_rules`](macros-by-example.md#r-macro.decl.scope.path-based)
+    * [Procedural Macros]
+
 [Macros by Example]: macros-by-example.md
 [Procedural Macros]: procedural-macros.md
 [associated items]: items/associated-items.md
