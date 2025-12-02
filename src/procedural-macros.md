@@ -241,12 +241,10 @@ A helper attribute for a derive macro is declared by adding its identifier to th
 > ```
 
 r[macro.proc.derive.attributes.scope]
-Helper attributes are in scope after the macro that introduces them.
+When a derive macro invocation is applied to an item, the helper attributes introduced by that derive macro become in scope 1) for attributes that are applied to that item and are applied lexically after the derive macro invocation and 2) for attributes that are applied to fields and variants inside of the item.
 
 > [!NOTE]
-> rustc currently allows derive helpers to be used before the macro that
-> introduces them. Such derive helpers used out of order may not shadow other
-> attribute macros. This behavior is deprecated and slated for removal.
+> rustc currently allows derive helpers to be used before the macro that introduces them. Such derive helpers used out of order may not shadow other attribute macros. This behavior is deprecated and slated for removal.
 >
 > <!-- ignore: requires external crates -->
 > ```rust,ignore

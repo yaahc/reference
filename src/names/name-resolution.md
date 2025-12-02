@@ -43,7 +43,7 @@ r[names.resolution.expansion.expansion-order-stability]
 The resolution of names must be *stable*. After expansion, names in the fully expanded AST must resolve to the same definition, regardless of the order in which macros are expanded.
 
 r[names.resolution.expansion.speculation]
-All name resolution candidates selected during macro expansion are considering speculative. Once the crate has been fully expanded all speculative import resolutions are validated to ensure that no new ambiguities were introduced by macro expansion.
+All name resolution candidates selected during macro expansion are considered speculative. Once the crate has been fully expanded, all speculative import resolutions are validated to ensure that macro expansion did not introduce any new ambiguities.
 
 > [!NOTE]
 >
@@ -130,7 +130,7 @@ r[names.resolution.expansion.imports.ambiguity]
 r[names.resolution.expansion.imports.ambiguity.intro]
 Some situations are an error when there is an ambiguity as to which macro definition, `use` declaration, or module an import or macro invocation's name refers to. This happens when there are two name candidates that do not resolve to the same entity where neither candidate is [permitted] to shadow the other.
 
-r[names.resolution.expansion.imports.ambiguity.globvsglob]
+r[names.resolution.expansion.imports.ambiguity.glob-vs-glob]
 Names may not be resolved through ambiguous glob imports. Glob imports are allowed to import conflicting names in the same namespace as long as the name is not used. Names with conflicting candidates from ambiguous glob imports may still be shadowed by non glob imports and used without producing an error. The errors occur at time of use, not time of import.
 
 For example:
@@ -223,7 +223,7 @@ pub fn qux() {
 ```
 
 > [!NOTE]
-> These ambiguity errors are specific to imports, even though they are only observed when those imports are used, having multiple candidates available for a given name during later stages of resolution is not considered an error, so long as none of the imports themselves are ambiguous, there will always be a single unambiguous closest resolution during later stages.
+> These ambiguity errors are specific to imports, even though they are only observed when those imports are used. Having multiple candidates available for a given name during later stages of resolution is not considered an error, so long as none of the imports themselves are ambiguous, there will always be a single unambiguous closest resolution.
 >
 > ```rust
 > mod bar {
@@ -333,10 +333,7 @@ The available scopes are visited in the following order.
 
 > [!NOTE]
 >
-> The compiler will attempt to resolve derive helpers that are used before
-> their associated macro introduces them into scope after resolving derive
-> helper candidates that are correctly in scope. This behavior is slated for
-> removal.
+> The compiler will attempt to resolve derive helpers that are used before their associated macro introduces them into scope after resolving derive helper candidates that are correctly in scope. This behavior is slated for removal.
 >
 > For more info see [derive helper scope].
 
@@ -345,7 +342,7 @@ The available scopes are visited in the following order.
 > Starting in edition 2018 the `#[macro_use]` prelude is not visited when `#[no_implicit_prelude]` is present.
 
 r[names.resolution.expansion.macros.derivehelpers]
-not visited when resolving derive macros in the parent scope (starting scope)
+Derive helper scopes are not visited when resolving derive macros in the parent scope (starting scope).
 
 r[names.resolution.expansion.macros.reserved-names]
 The names `cfg` and `cfg_attr` are reserved in the macro attribute [sub-namespace].
