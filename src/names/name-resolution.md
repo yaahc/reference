@@ -88,13 +88,13 @@ mod my_mod {
     pub type TypeAlias = MyEnum;
 }
 
-// valid imports resolved at expansion-time
+// Valid imports resolved at expansion-time:
 use my_mod::MyEnum; // OK
 use my_mod::MyEnum::MyVariant; // OK
 use my_mod::TypeAlias; // OK
 use my_mod::CONST; // OK
 
-// valid expressions resolved during type-relative resolution
+// Valid expressions resolved during type-relative resolution:
 let _ = my_mod::TypeAlias::MyVariant; // OK
 let _ = my_mod::MyEnum::CONST; // OK
 ```
@@ -113,9 +113,9 @@ let _ = my_mod::MyEnum::CONST; // OK
 #
 #     pub type TypeAlias = MyEnum;
 # }
-// invalid type-relative imports that can't resolve at expansion-time
-use my_mod::TypeAlias::MyVariant; // Doesn't work
-use my_mod::MyEnum::CONST; // Doesn't work
+// Invalid type-relative imports that can't resolve at expansion-time:
+use my_mod::TypeAlias::MyVariant; // ERROR: unresolved import `my_mod::TypeAlias`
+use my_mod::MyEnum::CONST; // ERROR: unresolved import `my_mod::MyEnum::CONST`
 ```
 
 r[names.resolution.expansion.imports.shadowing]
@@ -145,7 +145,7 @@ mod bar {
 }
 
 use foo::*;
-use bar::*; //~ OK, no name conflict.
+use bar::*; // OK, no name conflict.
 
 fn ambiguous_use() {
     // This would be an error, due to the ambiguity.
@@ -153,7 +153,7 @@ fn ambiguous_use() {
 }
 
 fn ambiguous_shadow() {
-    // This is permitted, since resolution is not through the ambiguous globs
+    // This is permitted, since resolution is not through the ambiguous globs.
     struct Qux;
     let x = Qux;
 }
@@ -239,7 +239,7 @@ pub fn qux() {
 > pub fn foo() {
 >     use bar::*;
 >     assert!(NAME);
->     //      ^--- this NAME is resolved during primary resolution
+>     //      ^--- This `NAME` is resolved during primary resolution.
 > }
 > ```
 
@@ -278,7 +278,7 @@ macro_rules! m {
 }
 pub fn foo() {
     m!(); // ERROR: `m` is ambiguous
-    use crate::m2 as m; // in scope for entire function body
+    use crate::m2 as m; // In scope for entire function body.
 }
 ```
 
@@ -315,25 +315,6 @@ pub fn baz() {}
 pub fn qux() {}
 ```
 
-r[names.resolution.expansion.imports.ambiguity.derivehelper]
-Helper attributes may not be used before the macro that introduces them.
-
-> [!NOTE]
-> rustc currently allows derive helpers to be used before their attribute macro introduces them into scope so long as they do not shadow any other attributes or derive helpers that are otherwise correctly in scope. This behavior is deprecated and slated for removal.
->
-> TODO this is wrong
->
-> <!-- ignore: requires external crates -->
-> ```rust,ignore
-> #[helper] // deprecated, hard error in the future
-> #[derive(WithHelperAttr)]
-> struct Struct {
->     field: (),
-> }
-> ```
->
-> For more details, see [Rust issue #79202](https://github.com/rust-lang/rust/issues/79202).
-
 r[names.resolution.expansion.macros]
 ### Macros
 
@@ -343,19 +324,25 @@ Macros are resolved by iterating through the available scopes to find the availa
 r[names.resolution.expansion.macros.visitation-order]
 The available scopes are visited in the following order.
 
-* derive helpers
-* derive helpers compat TODO admonitionify
-* textual scope macros
-* path-based scope macros
-* macrouseprelude
-* stdlibprelude
-* builtinattrs
+* [derive helpers]
+* [textual scope macros]
+* [path-based scope macros]
+* [`macro_use` prelude]
+* [Standard library prelude]
+* [Builtin attributes]
+
+> [!NOTE]
+>
+> The compiler will attempt to resolve derive helpers that are used before
+> their associated macro introduces them into scope after resolving derive
+> helper candidates that are correctly in scope. This behavior is slated for
+> removal.
+>
+> For more info see [derive helper scope].
 
 > [!EDITION-2018]
 >
 > Starting in edition 2018 the `#[macro_use]` prelude is not visited when `#[no_implicit_prelude]` is present.
-
-TODO linkify
 
 r[names.resolution.expansion.macros.derivehelpers]
 not visited when resolving derive macros in the parent scope (starting scope)
@@ -373,17 +360,25 @@ r[names.resolution.type-dependent]
 > [!NOTE]
 > This is a placeholder for future expansion about type-dependent resolution.
 
+[Builtin attributes]: ./preludes.md#r-names.preludes.lang
 [Macros]: ../macros.md
+[Standard library prelude]: ./preludes.md#r-names.preludes.std
 [`let` bindings]: ../statements.md#let-statements
+[`macro_use` prelude]: ./preludes.md#r-names.preludes.macro_use
 [`use` declarations]: ../items/use-declarations.md
 [`use` glob shadowing]: ../items/use-declarations.md#r-items.use.glob.shadowing
+[derive helper scope]: ../procedural-macros.md#r-macro.proc.derive.attributes.scope
+[derive helpers]: ../procedural-macros.md#r-macro.proc.derive.attributes
 [item definitions]: ../items.md
 [macro invocations]: ../macros.md#macro-invocation
 [macro textual scope shadowing]: ../macros-by-example.md#r-macro.decl.scope.textual.shadow
 [namespaces]: ../names/namespaces.md
-[outer scope]: #names.resolution.general.scopes
+[outer scope]: #r-names.resolution.general.scopes
+[path-based scope macros]: ../macros.md#r-macro.invocation.name-resolution
 [path-based scope]: ../macros.md#r-macro.invocation.name-resolution
 [permitted]: name-resolution.md#r-names.resolution.expansion.imports.shadowing
 [scope]: ../names/scopes.md
 [sub-namespace]: ../names/namespaces.md#r-names.namespaces.sub-namespaces
+[textual scope macros]: ../macros-by-example.md#r-macro.decl.scope.textual
 [visibility]: ../visibility-and-privacy.md
+

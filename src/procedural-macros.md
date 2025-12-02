@@ -240,9 +240,25 @@ A helper attribute for a derive macro is declared by adding its identifier to th
 > }
 > ```
 
+r[macro.proc.derive.attributes.scope]
+Helper attributes are in scope after the macro that introduces them.
+
 > [!NOTE]
+> rustc currently allows derive helpers to be used before the macro that
+> introduces them. Such derive helpers used out of order may not shadow other
+> attribute macros. This behavior is deprecated and slated for removal.
 >
-> For helper attribute ambiguity errors, see [name resolution ambiguities].
+> <!-- ignore: requires external crates -->
+> ```rust,ignore
+> #[helper] // Deprecated, hard error in the future.
+> #[derive(WithHelperAttr)]
+> struct Struct {
+>     field: (),
+> }
+> ```
+>
+> For more details, see [Rust issue #79202](https://github.com/rust-lang/rust/issues/79202).
+
 
 <!-- template:attributes -->
 r[macro.proc.attribute]
