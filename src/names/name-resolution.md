@@ -2,127 +2,141 @@ r[names.resolution]
 # Name resolution
 
 r[names.resolution.intro]
-_Name resolution_ is the process of tying paths and other identifiers to the declarations of those entities. Names are segregated into different [namespaces], allowing entities in different namespaces to share the same name without conflict. Each name is valid within a [scope], or a region of source text where that name may be referenced. Access to certain names may be restricted based on their [visibility].
+_Name resolution_ is the process of tying paths and other identifiers to the declarations of those entities. Names are segregated into different [namespaces], allowing entities in different namespaces to share the same name without conflict. Each name is valid within a [scope], or a region of source text where that name may be referenced. Access to a name may be restricted based on its [visibility].
 
-Name resolution is split into three stages throughout the compilation process. The first stage, *expansion-time resolution*, resolves all [`use` declarations] and [macro invocations]. The second stage, *primary resolution*, resolves all names that have not yet been resolved that do not depend on type information to resolve. The last stage, *type-relative resolution*, resolves the remaining names once type information is available.
+Name resolution is split into three stages throughout the compilation process. The first stage, *expansion-time resolution*, resolves all [`use` declarations] and [macro invocations]. The second stage, *primary resolution*, resolves all names that have not yet been resolved and that do not depend on type information to resolve. The last stage, *type-relative resolution*, resolves the remaining names once type information is available.
 
 > [!NOTE]
->
-> * Expansion-time resolution is also known as "early resolution".
-> * Primary resolution is also known as "late resolution".
+> Expansion-time resolution is also known as *early resolution*. Primary resolution is also known as *late resolution*.
 
 r[names.resolution.general]
 ## General
 
 r[names.resolution.general.intro]
-The following rules apply to all stages of name resolution.
+The rules within this section apply to all stages of name resolution.
 
 r[names.resolution.general.scopes]
 ### Scopes
 
 r[names.resolution.general.scopes.intro]
 > [!NOTE]
-> This is a placeholder for future expansion about resolution of names through various scopes.
+> This is a placeholder for future expansion about resolution of names within various scopes.
 
 r[names.resolution.expansion]
 ## Expansion-time name resolution
 
 r[names.resolution.expansion.intro]
-Expansion-time name resolution is the stage of name resolution necessary to complete macro expansion and fully generate a crate's AST. This stage requires the resolution of macro invocations and `use` declarations. Resolving `use` declarations is required to resolve [path-based scope] macro invocations. Resolving macro invocations is required in order to expand them.
+Expansion-time name resolution is the stage of name resolution necessary to complete macro expansion and fully generate a crate's [AST]. This stage requires the resolution of macro invocations and `use` declarations. Resolving `use` declarations is required for macro invocations that resolve via [path-based scope]. Resolving macro invocations is required in order to expand them.
 
 r[names.resolution.expansion.unresolved-invocations]
-After expansion-time name resolution, the AST must not contain any unexpanded macro invocations. Every macro invocation resolves to a valid definition that exists in the final AST or an external crate.
+After expansion-time name resolution, the AST must not contain any unexpanded macro invocations. Every macro invocation resolves to a valid definition that exists in the final AST or in an external crate.
 
 ```rust,compile_fail
-fn main() {
-    foo!(); // ERROR: cannot find macro `foo` in this scope
-}
+m!(); // ERROR: Cannot find macro `m` in this scope.
 ```
 
 r[names.resolution.expansion.expansion-order-stability]
-The resolution of names must be *stable*. After expansion, names in the fully expanded AST must resolve to the same definition, regardless of the order in which macros are expanded.
+The resolution of names must be stable. After expansion, names in the fully expanded AST must resolve to the same definition regardless of the order in which macros are expanded and imports are resolved.
 
 r[names.resolution.expansion.speculation]
 All name resolution candidates selected during macro expansion are considered speculative. Once the crate has been fully expanded, all speculative import resolutions are validated to ensure that macro expansion did not introduce any new ambiguities.
 
 > [!NOTE]
->
-> Due to the iterative nature of macro expansion, this causes so called time traveling ambiguities, such as when a macro or glob import introduces an item that is ambiguous with its own base path.
+> Due to the iterative nature of macro expansion, this causes so-called time traveling ambiguities, such as when a macro or glob import introduces an item that is ambiguous with its own base path.
 >
 > ```rust,compile_fail,E0659
-> macro_rules! m {
->     () => { mod bar {} }
+> # fn main() {}
+> macro_rules! f {
+>     () => {
+>         mod m {
+>             pub(crate) use f;
+>         }
+>     }
 > }
+> f!();
 >
-> mod bar {
->     pub(crate) use m;
-> }
->
-> fn f() {
->     // * Initially speculatively resolve `bar` to the module in the crate root.
->     // * Expansion of `m` introduces a second bar module inside the body of `f`.
->     // * Expansion-time resolution finalizes resolutions by re-resolving all
->     //   imports and macro invocations, sees the introduced ambiguity
->     //   and reports it as an error.
->     bar::m!(); // ERROR: `bar` is ambiguous
-> }
+> const _: () = {
+>     // Initially, we speculatively resolve `m` to the module in
+>     // the crate root.
+>     //
+>     // Expansion of `f` introduces a second `m` module inside this
+>     // body.
+>     //
+>     // Expansion-time resolution finalizes resolutions by re-
+>     // resolving all imports and macro invocations, sees the
+>     // introduced ambiguity and reports it as an error.
+>     m::f!(); // ERROR: `bar` is ambiguous.
+> };
 > ```
 
 r[names.resolution.expansion.imports]
 ### Imports
 r[names.resolution.expansion.imports.intro]
-All `use` declarations are fully resolved during this stage of resolution. Type-relative paths cannot be resolved at this stage of compilation and will produce an error.
+All `use` declarations are fully resolved during this stage of resolution. [Type-relative paths] cannot be resolved at this stage and will produce an error.
 
 ```rust
-mod my_mod {
-    pub const CONST: () = ();
-
-    pub enum MyEnum {
-        MyVariant
+mod m {
+    pub const C: () = ();
+    pub enum E { V }
+    pub type A = E;
+    impl E {
+        pub const C: () = ();
     }
-
-    impl MyEnum {
-        pub const CONST: () = ();
-    }
-
-    pub type TypeAlias = MyEnum;
 }
 
 // Valid imports resolved at expansion-time:
-use my_mod::MyEnum; // OK
-use my_mod::MyEnum::MyVariant; // OK
-use my_mod::TypeAlias; // OK
-use my_mod::CONST; // OK
+use m::C; // OK.
+use m::E; // OK.
+use m::A; // OK.
+use m::E::V; // OK.
 
 // Valid expressions resolved during type-relative resolution:
-let _ = my_mod::TypeAlias::MyVariant; // OK
-let _ = my_mod::MyEnum::CONST; // OK
+let _ = m::A::V; // OK.
+let _ = m::E::C; // OK.
 ```
 
 ```rust,compile_fail,E0432
-# mod my_mod {
-#     pub const CONST: () = ();
-#
-#     pub enum MyEnum {
-#         MyVariant
+# mod m {
+#     pub const C: () = ();
+#     pub enum E { V }
+#     pub type A = E;
+#     impl E {
+#         pub const C: () = ();
 #     }
-#
-#     impl MyEnum {
-#         pub const CONST: () = ();
-#     }
-#
-#     pub type TypeAlias = MyEnum;
 # }
 // Invalid type-relative imports that can't resolve at expansion-time:
-use my_mod::TypeAlias::MyVariant; // ERROR: unresolved import `my_mod::TypeAlias`
-use my_mod::MyEnum::CONST; // ERROR: unresolved import `my_mod::MyEnum::CONST`
+use m::E::C; // ERROR: Unresolved import `m::E::C`.
+use m::A::V; // ERROR: Unresolved import `m::A::V`.
 ```
 
 r[names.resolution.expansion.imports.shadowing]
-The following is a list of situations where shadowing of `use` declarations is permitted:
+Shadowing of names with a `use` declaration is permitted only with:
 
-* [`use` glob shadowing]
-* [Macro textual scope shadowing]
+- [`use` glob shadowing]
+- [Macro textual scope shadowing]
+- TODO: Also `use` declarations in anonymous scopes.
+
+Example for the TODO:
+
+```rust
+pub mod foo {
+    pub mod baz {
+        pub struct Name;
+    }
+}
+
+pub mod bar {
+    pub mod baz {
+        pub struct Name;
+    }
+}
+
+use foo::baz::Name;
+fn f() {
+    use bar::baz::Name;
+    Name;
+}
+```
 
 r[names.resolution.expansion.imports.ambiguity]
 #### Ambiguities
@@ -159,7 +173,7 @@ fn ambiguous_shadow() {
 }
 ```
 
-Multiple glob imports are allowed to import the same name, and that name is allowed to be used, if the imports are of the same item (following re-exports). The visibility of the name is the maximum visibility of the imports. For example:
+Multiple glob imports are allowed to import the same name, and that name is allowed to be used if the imports are of the same item (following re-exports). The visibility of the name is the maximum visibility of the imports. For example:
 
 ```rust
 mod foo {
@@ -181,7 +195,7 @@ fn main() {
 }
 ```
 
-r[names.resolution.expansion.imports.ambiguity.globvsouter]
+r[names.resolution.expansion.imports.ambiguity.glob-vs-outer]
 Names may not be resolved through glob imports when there is another candidate available in an [outer scope].
 
 ```rust,compile_fail,E0659
@@ -223,7 +237,7 @@ pub fn qux() {
 ```
 
 > [!NOTE]
-> These ambiguity errors are specific to imports, even though they are only observed when those imports are used. Having multiple candidates available for a given name during later stages of resolution is not considered an error, so long as none of the imports themselves are ambiguous, there will always be a single unambiguous closest resolution.
+> These ambiguity errors are specific to imports, even though they are only observed when those imports are used. Having multiple candidates available for a given name during later stages of resolution is not considered an error. So long as none of the imports themselves are ambiguous, there will always be a single unambiguous closest resolution.
 >
 > ```rust
 > mod bar {
@@ -243,29 +257,7 @@ pub fn qux() {
 > }
 > ```
 
-r[names.resolution.expansion.imports.ambiguity.moreexpandedvsouter]
-Name bindings from macro expansions to may not shadow name bindings from outside of those expansions.
-
-```rust,compile_fail,E0659
-macro_rules! name {
-    () => {}
-}
-
-macro_rules! define_name {
-    () => {
-        macro_rules! name {
-            () => {}
-        }
-    }
-}
-
-fn foo() {
-    define_name!();
-    name!(); // ERROR: `name` is ambiguous
-}
-```
-
-r[names.resolution.expansion.imports.ambiguity.pathvstextualmacro]
+r[names.resolution.expansion.imports.ambiguity.path-vs-textual-macro]
 Path-based scope bindings for macros may not shadow textual scope bindings to macros. For bindings from [`use` declarations], this applies regardless of their [sub-namespace].
 
 ```rust,compile_fail,E0659
@@ -347,16 +339,42 @@ Derive helper scopes are not visited when resolving derive macros in the parent 
 r[names.resolution.expansion.macros.reserved-names]
 The names `cfg` and `cfg_attr` are reserved in the macro attribute [sub-namespace].
 
+r[names.resolution.expansion.macros.ambiguity]
+#### Ambiguities
+
+r[names.resolution.expansion.macros.ambiguity.more-expanded-vs-outer]
+Name bindings from macro expansions may not shadow name bindings from outside of those expansions.
+
+```rust,compile_fail,E0659
+macro_rules! name {
+    () => {}
+}
+
+macro_rules! define_name {
+    () => {
+        macro_rules! name {
+            () => {}
+        }
+    }
+}
+
+fn foo() {
+    define_name!();
+    name!(); // ERROR: `name` is ambiguous
+}
+```
+
 r[names.resolution.primary]
 ## Primary name resolution
 > [!NOTE]
 > This is a placeholder for future expansion about primary name resolution.
 
-r[names.resolution.type-dependent]
-# Type-dependent resolution
+r[names.resolution.type-relative]
+# Type-relative resolution
 > [!NOTE]
 > This is a placeholder for future expansion about type-dependent resolution.
 
+[AST]: glossary.ast
 [Builtin attributes]: ./preludes.md#r-names.preludes.lang
 [Derive helpers]: ../procedural-macros.md#r-macro.proc.derive.attributes
 [Macros]: ../macros.md
@@ -377,5 +395,5 @@ r[names.resolution.type-dependent]
 [permitted]: name-resolution.md#r-names.resolution.expansion.imports.shadowing
 [scope]: ../names/scopes.md
 [sub-namespace]: ../names/namespaces.md#r-names.namespaces.sub-namespaces
+[type-relative paths]: names.resolution.type-relative
 [visibility]: ../visibility-and-privacy.md
-
