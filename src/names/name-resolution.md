@@ -324,9 +324,9 @@ Macros are resolved by iterating through the available scopes to find the availa
 r[names.resolution.expansion.macros.visitation-order]
 The available scopes are visited in the following order.
 
-* [derive helpers]
-* [textual scope macros]
-* [path-based scope macros]
+* [Derive helpers]
+* [Textual scope macros]
+* [Path-based scope macros]
 * [`macro_use` prelude]
 * [Standard library prelude]
 * [Builtin attributes]
@@ -358,24 +358,24 @@ r[names.resolution.type-dependent]
 > This is a placeholder for future expansion about type-dependent resolution.
 
 [Builtin attributes]: ./preludes.md#r-names.preludes.lang
+[Derive helpers]: ../procedural-macros.md#r-macro.proc.derive.attributes
 [Macros]: ../macros.md
+[Path-based scope macros]: ../macros.md#r-macro.invocation.name-resolution
 [Standard library prelude]: ./preludes.md#r-names.preludes.std
+[Textual scope macros]: ../macros-by-example.md#r-macro.decl.scope.textual
 [`let` bindings]: ../statements.md#let-statements
 [`macro_use` prelude]: ./preludes.md#r-names.preludes.macro_use
 [`use` declarations]: ../items/use-declarations.md
 [`use` glob shadowing]: ../items/use-declarations.md#r-items.use.glob.shadowing
 [derive helper scope]: ../procedural-macros.md#r-macro.proc.derive.attributes.scope
-[derive helpers]: ../procedural-macros.md#r-macro.proc.derive.attributes
 [item definitions]: ../items.md
 [macro invocations]: ../macros.md#macro-invocation
 [macro textual scope shadowing]: ../macros-by-example.md#r-macro.decl.scope.textual.shadow
 [namespaces]: ../names/namespaces.md
 [outer scope]: #r-names.resolution.general.scopes
-[path-based scope macros]: ../macros.md#r-macro.invocation.name-resolution
 [path-based scope]: ../macros.md#r-macro.invocation.name-resolution
 [permitted]: name-resolution.md#r-names.resolution.expansion.imports.shadowing
 [scope]: ../names/scopes.md
 [sub-namespace]: ../names/namespaces.md#r-names.namespaces.sub-namespaces
-[textual scope macros]: ../macros-by-example.md#r-macro.decl.scope.textual
 [visibility]: ../visibility-and-privacy.md
 
