@@ -65,7 +65,7 @@ All name resolution candidates selected during macro expansion are considered sp
 >     // Expansion-time resolution finalizes resolutions by re-
 >     // resolving all imports and macro invocations, sees the
 >     // introduced ambiguity and reports it as an error.
->     m::f!(); // ERROR: `bar` is ambiguous.
+>     m::f!(); // ERROR: `m` is ambiguous.
 > };
 > ```
 
@@ -261,10 +261,9 @@ pub fn qux() {
 > ```
 
 r[names.resolution.expansion.imports.ambiguity.path-vs-textual-macro]
-Path-based scope bindings for macros may not shadow textual scope bindings to macros. For bindings from [`use` declarations], this applies regardless of their [sub-namespace].
+Path-based scope bindings for macros may not shadow textual scope bindings to macros.
 
 ```rust,compile_fail,E0659
-#[macro_export]
 macro_rules! m2 {
     () => {}
 }
@@ -273,41 +272,8 @@ macro_rules! m {
 }
 pub fn foo() {
     m!(); // ERROR: `m` is ambiguous
-    use crate::m2 as m; // In scope for entire function body.
+    use m2 as m; // In scope for entire function body.
 }
-```
-
-r[names.resolution.expansion.imports.ambiguity.builtin-attr]
-It is an error to use a user defined attribute or derive macro with the same name as a builtin attribute (e.g. inline).
-
-<!-- ignore: test doesn't support proc-macro -->
-```rust,ignore
-// myinline/src/lib.rs
-use proc_macro::TokenStream;
-
-#[proc_macro_attribute]
-pub fn inline(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    item
-}
-```
-
-<!-- ignore: requires external crates -->
-```rust,ignore
-// src/lib.rs
-use myinline::inline;
-use myinline::inline as myinline;
-
-#[myinline::inline]
-pub fn foo() {}
-
-#[crate::inline]
-pub fn bar() {}
-
-#[myinline]
-pub fn baz() {}
-
-#[inline] // ERROR: `inline` is ambiguous
-pub fn qux() {}
 ```
 
 r[names.resolution.expansion.macros]
@@ -328,7 +294,7 @@ The available scopes are visited in the following order.
 
 > [!NOTE]
 >
-> The compiler will attempt to resolve derive helpers that are used before their associated macro introduces them into scope after resolving derive helper candidates that are correctly in scope. This behavior is slated for removal.
+> The compiler will attempt to resolve derive helpers that are used before their associated macro introduces them into scope. This scope is visited after the scope for resolving derive helper candidates that are correctly in scope. This behavior is slated for removal.
 >
 > For more info see [derive helper scope].
 
@@ -366,6 +332,57 @@ fn foo() {
     name!(); // ERROR: `name` is ambiguous
 }
 ```
+
+r[names.resolution.expansion.macros.ambiguity.builtin-attr]
+User defined attributes or derive macros may not shadow builtin non-macro attributes (e.g. inline).
+
+<!-- ignore: test doesn't support proc-macro -->
+```rust,ignore
+// with-helper/src/lib.rs
+# use proc_macro::TokenStream;
+#
+#[proc_macro_derive(WithHelperAttr, attributes(non_exhaustive))]
+//                                             ^------------- user attr candidate
+...
+# pub fn derive_with_helper_attr(_item: TokenStream) -> TokenStream {
+#     TokenStream::new()
+# }
+```
+
+<!-- ignore: requires external crates -->
+```rust,ignore
+// src/lib.rs
+#[derive(with_helper::WithHelperAttr)]
+#[non_exhaustive] // ERROR: `non_exhaustive` is ambiguous
+struct S;
+```
+
+> [!NOTE]
+> This applies regardless of the name the builtin attribute is a candidate for:
+>
+> <!-- ignore: test doesn't support proc-macro -->
+> ```rust,ignore
+> // with-helper/src/lib.rs
+> # use proc_macro::TokenStream;
+> #
+> #[proc_macro_derive(WithHelperAttr, attributes(helper))]
+> //                                             ^----- user attr candidate
+> ...
+> # pub fn derive_with_helper_attr(_item: TokenStream) -> TokenStream {
+> #     TokenStream::new()
+> # }
+> ```
+>
+> <!-- ignore: requires external crates -->
+> ```rust,ignore
+> // src/lib.rs
+> use inline as helper;
+> //            ^----- builtin attr candidate via re-export
+>
+> #[derive(with_helper::WithHelperAttr)]
+> #[helper] // ERROR: `helper` is ambiguous
+> struct S;
+> ```
 
 r[names.resolution.primary]
 ## Primary name resolution
