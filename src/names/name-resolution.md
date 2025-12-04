@@ -110,13 +110,9 @@ use m::A::V; // ERROR: Unresolved import `m::A::V`.
 ```
 
 r[names.resolution.expansion.imports.shadowing]
-Shadowing of names with a `use` declaration is permitted only with:
-
-- [`use` glob shadowing]
-- [Macro textual scope shadowing]
-- TODO: Also `use` declarations in anonymous scopes.
-
-Example for the TODO:
+Names introduced via `use` declarations in an [outer scope] are shadowed by
+candidates in the same namespace with the same name from an inner scope except
+where otherwise restricted by [name resolution ambiguities].
 
 ```rust
 pub mod foo {
@@ -127,16 +123,23 @@ pub mod foo {
 
 pub mod bar {
     pub mod baz {
-        pub struct Name;
+        pub struct Name(pub ());
     }
 }
 
-use foo::baz::Name;
+use foo::baz;
 fn f() {
-    use bar::baz::Name;
-    Name;
+    use bar::baz;
+    use baz::Name
+    Name(());
 }
 ```
+
+r[names.resolution.expansion.imports.shadowing.shared-scope]
+Shadowing of names introduced via `use` declarations within a single scope is permitted in the following situations:
+
+- [`use` glob shadowing]
+- [Macro textual scope shadowing]
 
 r[names.resolution.expansion.imports.ambiguity]
 #### Ambiguities
@@ -389,6 +392,7 @@ r[names.resolution.type-relative]
 [item definitions]: ../items.md
 [macro invocations]: ../macros.md#macro-invocation
 [macro textual scope shadowing]: ../macros-by-example.md#r-macro.decl.scope.textual.shadow
+[name resolution ambiguities]: #r-names.resolution.expansion.imports.ambiguity
 [namespaces]: ../names/namespaces.md
 [outer scope]: #r-names.resolution.general.scopes
 [path-based scope]: ../macros.md#r-macro.invocation.name-resolution
